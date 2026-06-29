@@ -1,0 +1,402 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  telegramId   BigInt?  @unique
+  whatsappId   String?  @unique
+  email        String?  @unique
+  phone        String?  @unique
+  nameAr       String   @map("name_ar")
+  governorateId String? @map("governorate_id")
+  districtId   String?  @map("district_id")
+  passwordHash String?  @map("password_hash")
+  role         String   @default("user")
+  avatarUrl    String?  @map("avatar_url")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  bots              Bot[]
+  telegramListings  TelegramListing[]
+  restaurants       Restaurant[]
+  stores            Store[]
+  orders            Order[]
+  tickets           Ticket[]            @relation("UserTickets")
+  assignedTickets   Ticket[]            @relation("AssignedTickets")
+  ticketMessages    TicketMessage[]
+  wallets           Wallet[]
+
+  @@map("users")
+}
+
+model Bot {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  name          String
+  botType       String   @map("bot_type")
+  templateId    String?  @map("template_id")
+  status        String   @default("draft")
+  platformConfig Json?   @map("platform_config")
+  avatarUrl     String?  @map("avatar_url")
+  description   String?
+  language      String   @default("ar")
+  governorateId String?  @map("governorate_id")
+  isAiEnabled   Boolean  @default(true) @map("is_ai_enabled")
+  aiModel       String   @default("gemini-flash") @map("ai_model")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user          User     @relation(fields: [userId], references: [id])
+  flows         BotFlow[]
+  conversations BotConversation[]
+  tickets       Ticket[]
+
+  @@map("bots")
+}
+
+model BotFlow {
+  id           String   @id @default(uuid())
+  botId        String   @map("bot_id")
+  name         String
+  triggerType  String   @map("trigger_type")
+  triggerConfig Json?   @map("trigger_config")
+  blocks       Json
+  isActive     Boolean  @default(true) @map("is_active")
+  version      Int      @default(1)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  bot          Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@map("bot_flows")
+}
+
+model BotConversation {
+  id             String   @id @default(uuid())
+  botId          String   @map("bot_id")
+  platform       String
+  platformUserId String   @map("platform_user_id")
+  userName       String?  @map("user_name")
+  status         String   @default("open")
+  context        Json?
+  metadata       Json?
+  startedAt      DateTime @default(now()) @map("started_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  bot            Bot      @relation(fields: [botId], references: [id])
+  messages       BotMessage[]
+
+  @@map("bot_conversations")
+}
+
+model BotMessage {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  direction      String
+  messageType    String   @map("message_type")
+  content        Json
+  isAiGenerated  Boolean  @default(false) @map("is_ai_generated")
+  aiModelUsed    String?  @map("ai_model_used")
+  tokensUsed     Int?     @map("tokens_used")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation   BotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("bot_messages")
+}
+
+model BotTemplate {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  category      String
+  thumbnailUrl  String?  @map("thumbnail_url")
+  flowData      Json     @map("flow_data")
+  isPremium     Boolean  @default(false) @map("is_premium")
+  priceSyp      Float?   @map("price_syp")
+  priceUsd      Float?   @map("price_usd")
+  downloadsCount Int     @default(0) @map("downloads_count")
+  rating        Float    @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("bot_templates")
+}
+
+model TelegramListing {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  type          String
+  telegramId    String   @unique @map("telegram_id")
+  title         String
+  description   String?
+  category      String
+  subcategory   String?
+  governorateId String?  @map("governorate_id")
+  membersCount  Int      @default(0) @map("members_count")
+  language      String   @default("ar")
+  isVerified    Boolean  @default(false) @map("is_verified")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  tags          String[]
+  website       String?
+  contactPhone  String?  @map("contact_phone")
+  avatarUrl     String?  @map("avatar_url")
+  rating        Float    @default(0)
+  viewsCount    Int      @default(0) @map("views_count")
+  status        String   @default("pending")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@map("telegram_listings")
+}
+
+model Restaurant {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  nameAr           String   @map("name_ar")
+  nameEn           String?  @map("name_en")
+  description      String?
+  logoUrl          String?  @map("logo_url")
+  coverUrl         String?  @map("cover_url")
+  governorateId    String   @map("governorate_id")
+  districtId       String?  @map("district_id")
+  address          String?
+  phone            String
+  whatsappNumber   String   @map("whatsapp_number")
+  telegramUsername String?  @map("telegram_username")
+  workingHours     Json?    @map("working_hours")
+  isOpen           Boolean  @default(true) @map("is_open")
+  deliveryAvailable Boolean @default(false) @map("delivery_available")
+  deliveryFee      Float    @default(0) @map("delivery_fee")
+  minOrder         Float    @default(0) @map("min_order")
+  rating           Float    @default(0)
+  subscriptionTier String   @default("basic") @map("subscription_tier")
+  qrCodeUrl        String?  @map("qr_code_url")
+  status           String   @default("active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user             User     @relation(fields: [userId], references: [id])
+  categories       MenuCategory[]
+  menuItems        MenuItem[]
+
+  @@map("restaurants")
+}
+
+model MenuCategory {
+  id           String   @id @default(uuid())
+  restaurantId String   @map("restaurant_id")
+  nameAr       String   @map("name_ar")
+  nameEn       String?  @map("name_en")
+  icon         String?
+  sortOrder    Int      @default(0) @map("sort_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items        MenuItem[]
+
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id           String   @id @default(uuid())
+  restaurantId String   @map("restaurant_id")
+  categoryId   String?  @map("category_id")
+  nameAr       String   @map("name_ar")
+  nameEn       String?  @map("name_en")
+  descriptionAr String? @map("description_ar")
+  descriptionEn String? @map("description_en")
+  priceSyp     Float    @map("price_syp")
+  priceUsd     Float?   @map("price_usd")
+  images       String[]
+  isAvailable  Boolean  @default(true) @map("is_available")
+  hasExtras    Boolean  @default(false) @map("has_extras")
+  extras       Json?
+  prepTime     Int?     @map("prep_time")
+  tags         String[]
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category     MenuCategory? @relation(fields: [categoryId], references: [id])
+
+  @@map("menu_items")
+}
+
+model Store {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  name             String
+  description      String?
+  slug             String   @unique
+  logoUrl          String?  @map("logo_url")
+  coverUrl         String?  @map("cover_url")
+  governorateId    String   @map("governorate_id")
+  phone            String
+  whatsappNumber   String   @map("whatsapp_number")
+  deliveryAvailable Boolean @default(false) @map("delivery_available")
+  deliveryFee      Float    @default(0) @map("delivery_fee")
+  freeDeliveryMin  Float    @default(0) @map("free_delivery_min")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user             User     @relation(fields: [userId], references: [id])
+  products         Product[]
+  orders           Order[]
+
+  @@map("stores")
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  storeId       String   @map("store_id")
+  nameAr        String   @map("name_ar")
+  nameEn        String?  @map("name_en")
+  descriptionAr String?  @map("description_ar")
+  descriptionEn String?  @map("description_en")
+  priceSyp      Float    @map("price_syp")
+  priceUsd      Float?   @map("price_usd")
+  compareAtPrice Float?  @map("compare_at_price")
+  stock         Int      @default(0)
+  images        String[]
+  categoryId    String?  @map("category_id")
+  tags          String[]
+  variants      Json?
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  isActive      Boolean  @default(true) @map("is_active")
+  rating        Float    @default(0)
+  reviewsCount  Int      @default(0) @map("reviews_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  store         Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("products")
+}
+
+model Order {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  storeId          String   @map("store_id")
+  orderNumber      String   @unique @map("order_number")
+  items            Json
+  totalSyp         Float    @map("total_syp")
+  totalUsd         Float?   @map("total_usd")
+  status           String   @default("pending")
+  paymentMethod    String?  @map("payment_method")
+  paymentStatus    String   @default("unpaid") @map("payment_status")
+  collectionAgentId String? @map("collection_agent_id")
+  shippingAddress  String?  @map("shipping_address")
+  governorateId    String?  @map("governorate_id")
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user             User     @relation(fields: [userId], references: [id])
+  store            Store    @relation(fields: [storeId], references: [id])
+  payments         Payment[]
+
+  @@map("orders")
+}
+
+model Ticket {
+  id               String   @id @default(uuid())
+  botId            String?  @map("bot_id")
+  userId           String   @map("user_id")
+  assignedTo       String?  @map("assigned_to")
+  subject          String
+  description      String?
+  category         String   @default("other")
+  priority         String   @default("medium")
+  source           String   @default("website")
+  status           String   @default("open")
+  firstResponseAt  DateTime? @map("first_response_at")
+  resolvedAt       DateTime? @map("resolved_at")
+  satisfactionScore Int?    @map("satisfaction_score")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user             User     @relation("UserTickets", fields: [userId], references: [id])
+  assignee         User?    @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  bot              Bot?     @relation(fields: [botId], references: [id])
+  messages         TicketMessage[]
+
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id         String   @id @default(uuid())
+  ticketId   String   @map("ticket_id")
+  senderId   String   @map("sender_id")
+  senderType String   @map("sender_type")
+  message    String
+  attachments String[]
+  isInternal  Boolean  @default(false) @map("is_internal")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender     User     @relation(fields: [senderId], references: [id])
+
+  @@map("ticket_messages")
+}
+
+model Payment {
+  id           String   @id @default(uuid())
+  orderId      String   @map("order_id")
+  userId       String   @map("user_id")
+  agentId      String?  @map("agent_id")
+  method       String
+  amountSyp    Float    @map("amount_syp")
+  amountUsd    Float?   @map("amount_usd")
+  exchangeRate Float    @default(0) @map("exchange_rate")
+  status       String   @default("pending")
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  confirmedAt  DateTime? @map("confirmed_at")
+
+  order        Order    @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  balanceSyp Float   @default(0) @map("balance_syp")
+  balanceUsd Float   @default(0) @map("balance_usd")
+  isFrozen  Boolean  @default(false) @map("is_frozen")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id            String   @id @default(uuid())
+  walletId      String   @map("wallet_id")
+  type          String
+  amountSyp     Float    @map("amount_syp")
+  amountUsd     Float?   @map("amount_usd")
+  referenceType String?  @map("reference_type")
+  referenceId   String?  @map("reference_id")
+  status        String   @default("completed")
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  wallet        Wallet   @relation(fields: [walletId], references: [id])
+
+  @@map("wallet_transactions")
+}
