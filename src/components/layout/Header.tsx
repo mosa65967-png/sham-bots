@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, ChevronDown, Bot, ShoppingBag, Utensils, Headphones, MapPin } from 'lucide-react'
+import { Menu, X, ChevronDown, Bot, ShoppingBag, Utensils, Headphones } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { GovernorateSelector } from '@/components/shared/GovernorateSelector'
 import { CurrencyToggle } from '@/components/shared/CurrencyToggle'
@@ -13,9 +13,9 @@ const navItems = [
     href: '/directory',
     icon: Bot,
     children: [
-      { label: 'بوتات تليجرام', href: '/directory/bots' },
-      { label: 'قنوات تليجرام', href: '/directory/channels' },
-      { label: 'مجموعات تليجرام', href: '/directory/groups' },
+      { label: 'بوتات تليجرام', href: '/directory?filter=bots' },
+      { label: 'قنوات تليجرام', href: '/directory?filter=channels' },
+      { label: 'مجموعات تليجرام', href: '/directory?filter=groups' },
     ],
   },
   {

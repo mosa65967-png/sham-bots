@@ -19,7 +19,7 @@ const services = [
     title: 'دليل تليجرام',
     description: 'أكبر دليل للقنوات والمجموعات والبوتات في سوريا. مصنف حسب المحافظة والتصنيف.',
     icon: MessageCircle,
-    href: '/directory/channels',
+    href: '/directory',
     gradient: 'from-blue-500 to-cyan-500',
     features: ['آلاف القنوات', 'بحث ذكي', 'تصنيف دقيق', 'محتوى محلي'],
   },
@@ -51,7 +51,7 @@ const services = [
     title: 'دروب شيبينج',
     description: 'استورد منتجات من علي إكسبريس وبيعها في سوريا. بدون مخزون أو تكاليف شحن.',
     icon: ShoppingBag,
-    href: '/dropshipping',
+    href: '/stores',
     gradient: 'from-yellow-500 to-amber-600',
     features: ['استيراد تلقائي', 'لا مخزون مطلوب', 'شحن مباشر', 'هوامش ربح'],
   },
@@ -59,7 +59,7 @@ const services = [
 
 const stats = [
   { label: 'محافظة', value: '14', icon: MapPin },
-  { label: 'مستخدم نشط', value: '0', icon: Users },
+  { label: 'خدمة رقمية', value: '10+', icon: Users },
   { label: 'بوت جاهز', value: '10+', icon: Bot },
   { label: 'خدمة', value: '6', icon: Sparkles },
 ]
@@ -174,7 +174,7 @@ export default function Home() {
                     {governorates.slice(0, 7).map((gov) => (
                       <Link
                         key={gov.id}
-                        href={`/governorates/${gov.code.toLowerCase()}`}
+                        href="/directory"
                         className="px-3 py-1.5 rounded-lg bg-dark-tertiary text-sm text-gray-300 hover:text-white hover:bg-primary-500/20 transition-all"
                       >
                         {gov.nameAr}
@@ -182,10 +182,10 @@ export default function Home() {
                     ))}
                   </div>
                   <Link
-                    href="/governorates"
+                    href="/directory"
                     className="inline-block mt-4 text-sm text-primary-400 hover:text-primary-300 transition-colors"
                   >
-                    عرض جميع المحافظات ←
+                    تصفح جميع الخدمات ←
                   </Link>
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function Home() {
                 viewport={{ once: true }}
               >
                 <Link
-                  href={`/governorates/${gov.code.toLowerCase()}`}
+                  href="/directory"
                   className="glass-card text-center !p-4 block card-hover"
                 >
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center mx-auto mb-2">
@@ -438,7 +438,7 @@ export default function Home() {
               <Link href="/auth/register" className="btn-primary text-lg">
                 ابدأ مجاناً
               </Link>
-              <Link href="/contact" className="btn-secondary text-lg">
+              <Link href="/support" className="btn-secondary text-lg">
                 تواصل معنا
               </Link>
             </div>

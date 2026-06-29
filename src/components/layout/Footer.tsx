@@ -3,27 +3,27 @@ import { Bot, Utensils, ShoppingBag, Headphones, MapPin } from 'lucide-react'
 
 const footerLinks = {
   'الخدمات': [
-    { label: 'بوتات تليجرام', href: '/directory/bots' },
-    { label: 'قنوات تليجرام', href: '/directory/channels' },
-    { label: 'بوتات واتساب', href: '/whatsapp-bots' },
+    { label: 'بوتات تليجرام', href: '/directory?filter=bots' },
+    { label: 'قنوات تليجرام', href: '/directory?filter=channels' },
     { label: 'QR Menu', href: '/restaurants' },
+    { label: 'خدمة العملاء', href: '/support' },
   ],
   'التجارة': [
     { label: 'متجر إلكتروني', href: '/stores' },
-    { label: 'دروب شيبينج', href: '/dropshipping' },
     { label: 'تسعير الباقات', href: '/pricing' },
+    { label: 'لوحة التحكم', href: '/dashboard' },
   ],
   'الدعم': [
-    { label: 'اتصل بنا', href: '/contact' },
+    { label: 'مركز المساعدة', href: '/support' },
     { label: 'الأسئلة الشائعة', href: '/faq' },
-    { label: 'المدونة', href: '/blog' },
+    { label: 'اتصل بنا', href: '/contact' },
     { label: 'شروط الخدمة', href: '/terms' },
   ],
-  'المحافظات': [
-    { label: 'دمشق', href: '/governorates/damascus' },
-    { label: 'حلب', href: '/governorates/aleppo' },
-    { label: 'حمص', href: '/governorates/homs' },
-    { label: 'اللاذقية', href: '/governorates/latakia' },
+  'روابط سريعة': [
+    { label: 'دليل تليجرام', href: '/directory' },
+    { label: 'المطاعم', href: '/restaurants' },
+    { label: 'المتاجر', href: '/stores' },
+    { label: 'الأسعار', href: '/pricing' },
   ],
 }
 

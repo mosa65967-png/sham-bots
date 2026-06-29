@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/', '/auth/login', '/auth/register', '/directory', '/restaurants', '/stores', '/pricing', '/about', '/contact', '/faq', '/blog', '/terms', '/privacy']
-const API_PUBLIC_PATHS = ['/api/v1/governorates', '/api/v1/telegram-directory', '/api/v1/restaurants']
+const PUBLIC_PATHS = ['/', '/auth/login', '/auth/register', '/directory', '/restaurants', '/stores', '/pricing', '/support', '/contact', '/faq', '/blog', '/terms', '/privacy']
+const API_PUBLIC_PATHS = ['/api/v1/governorates', '/api/v1/telegram-directory', '/api/v1/orders', '/api/v1/bots', '/api/v1/agents']
 const STATIC_PATHS = ['/_next', '/favicon.ico', '/images', '/fonts']
 
 const RATE_LIMIT_MAP = new Map<string, { count: number; resetTime: number }>()

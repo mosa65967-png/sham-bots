@@ -5,7 +5,7 @@ import { MapPin, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { governorates } from '@/data/governorates'
 import { useAppStore } from '@/lib/store/app-store'
-import Image from 'next/image'
+
 import { SyriaMap } from '@/components/maps/SyriaMap'
 
 export function GovernorateSelector() {
