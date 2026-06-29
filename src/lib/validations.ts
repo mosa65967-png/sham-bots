@@ -60,6 +60,11 @@ export const ticketSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
 })
 
+export const ticketMessageSchema = z.object({
+  message: z.string().min(1, 'الرسالة مطلوبة').max(5000),
+  attachments: z.array(z.string()).optional(),
+})
+
 export const walletTopupSchema = z.object({
   amountSyp: z.number().positive(),
   method: z.enum(['cash', 'card', 'wallet']),
