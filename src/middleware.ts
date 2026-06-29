@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifySession, PROTECTED_ROUTES, AUTH_ROUTES } from '@/lib/auth'
 
 const PUBLIC_PATHS = ['/', '/auth/login', '/auth/register', '/directory', '/restaurants', '/stores', '/pricing', '/support', '/contact', '/faq', '/blog', '/terms', '/privacy']
-const API_PUBLIC_PATHS = ['/api/v1/governorates', '/api/v1/telegram-directory', '/api/v1/orders', '/api/v1/bots', '/api/v1/agents']
-const STATIC_PATHS = ['/_next', '/favicon.ico', '/images', '/fonts']
+const API_PUBLIC_PATHS = ['/api/v1/governorates', '/api/v1/telegram-directory', '/api/v1/orders', '/api/v1/bots', '/api/v1/agents', '/api/v1/restaurants', '/api/v1/auth/login']
+const STATIC_PATHS = ['/_next', '/favicon.ico', '/images', '/fonts', '/icon.svg']
 
 const RATE_LIMIT_MAP = new Map<string, { count: number; resetTime: number }>()
 const RATE_LIMIT_MAX = 100
@@ -29,7 +30,7 @@ function sanitizeInput(value: string): string {
     .trim()
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
 
@@ -45,6 +46,37 @@ export function middleware(request: NextRequest) {
         JSON.stringify({ success: false, error: 'طلبات كثيرة جداً. حاول لاحقاً.' }),
         { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } }
       )
+    }
+  }
+
+  // Auth check for protected routes
+  if (PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
+    const token = request.cookies.get('session')?.value
+    if (!token) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+    const session = await verifySession(token)
+    if (!session) {
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+    // Admin-only routes
+    if (pathname.startsWith('/admin') && session.role !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    // Agent-only routes
+    if (pathname.startsWith('/agent') && session.role !== 'agent' && session.role !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
+  // Redirect logged-in users away from auth pages
+  if (AUTH_ROUTES.some(route => pathname.startsWith(route))) {
+    const token = request.cookies.get('session')?.value
+    if (token) {
+      const session = await verifySession(token)
+      if (session) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
     }
   }
 
