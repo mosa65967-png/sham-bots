@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /agent/
+Disallow: /api/
+
+Sitemap: https://sham-bots-production.up.railway.app/sitemap.xml

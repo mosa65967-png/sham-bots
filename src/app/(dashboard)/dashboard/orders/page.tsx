@@ -1,15 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingBag, Package, Eye, Clock, CheckCircle2, XCircle } from 'lucide-react'
+import { ShoppingBag, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const mockOrders = [
-  { id: 'ORD-001', customer: 'أحمد محمود', items: 3, total: 85000, status: 'pending', date: '2026-06-29', type: 'store' },
-  { id: 'ORD-002', customer: 'سارة خالد', items: 5, total: 120000, status: 'confirmed', date: '2026-06-28', type: 'restaurant' },
-  { id: 'ORD-003', customer: 'محمد علي', items: 1, total: 45000, status: 'delivered', date: '2026-06-27', type: 'restaurant' },
-  { id: 'ORD-004', customer: 'نور حسن', items: 2, total: 35000, status: 'cancelled', date: '2026-06-26', type: 'store' },
-]
 
 const statusStyles: Record<string, string> = {
   pending: 'bg-yellow-500/20 text-yellow-400',
@@ -26,6 +20,58 @@ const statusLabels: Record<string, string> = {
 }
 
 export default function DashboardOrdersPage() {
+  const [orders, setOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const userRes = await fetch('/api/v1/auth/me')
+        if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
+        const userData = await userRes.json()
+
+        const ordersRes = await fetch(`/api/v1/orders?userId=${userData.id}`)
+        if (!ordersRes.ok) throw new Error('فشل في تحميل الطلبات')
+        const ordersData = await ordersRes.json()
+        setOrders(ordersData.data ?? [])
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchOrders()
+  }, [])
+
+  const stats = [
+    { label: 'الكل', value: orders.length },
+    { label: 'قيد الانتظار', value: orders.filter((o) => o.status === 'pending').length },
+    { label: 'مؤكدة', value: orders.filter((o) => o.status === 'confirmed').length },
+    { label: 'مكتملة', value: orders.filter((o) => o.status === 'delivered').length },
+  ]
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="glass-card text-center !py-16">
+          <p className="text-gray-400">جاري تحميل الطلبات...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="glass-card text-center !py-16">
+          <p className="text-red-400 mb-2">حدث خطأ في تحميل الطلبات</p>
+          <p className="text-gray-500 text-sm">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -35,7 +81,7 @@ export default function DashboardOrdersPage() {
         </div>
 
         <div className="grid sm:grid-cols-4 gap-4 mb-8">
-          {[{ label: 'الكل', value: mockOrders.length }, { label: 'قيد الانتظار', value: 1 }, { label: 'مؤكدة', value: 1 }, { label: 'مكتملة', value: 1 }].map((s) => (
+          {stats.map((s) => (
             <div key={s.label} className="glass-card text-center">
               <div className="text-2xl font-heading font-bold gradient-text">{s.value}</div>
               <div className="text-xs text-gray-500">{s.label}</div>
@@ -43,25 +89,33 @@ export default function DashboardOrdersPage() {
           ))}
         </div>
 
-        <div className="space-y-3">
-          {mockOrders.map((order) => (
-            <div key={order.id} className="glass-card flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-dark-tertiary flex items-center justify-center">
-                  <Package className="w-5 h-5 text-gray-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-white font-medium">{order.id}</span>
-                    <span className={cn('px-2 py-0.5 rounded text-[10px]', statusStyles[order.status])}>{statusLabels[order.status]}</span>
+        {orders.length === 0 ? (
+          <div className="glass-card text-center !py-16">
+            <ShoppingBag className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="font-heading font-bold text-xl text-white mb-2">لا توجد طلبات بعد</h3>
+            <p className="text-gray-400">عندما يتم تقديم طلب جديد، سيظهر هنا</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {orders.map((order) => (
+              <div key={order.id} className="glass-card flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-dark-tertiary flex items-center justify-center">
+                    <Package className="w-5 h-5 text-gray-400" />
                   </div>
-                  <p className="text-xs text-gray-400">{order.customer} · {order.items} منتجات · {order.total.toLocaleString()} ل.س</p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white font-medium">{order.id}</span>
+                      <span className={cn('px-2 py-0.5 rounded text-[10px]', statusStyles[order.status])}>{statusLabels[order.status]}</span>
+                    </div>
+                    <p className="text-xs text-gray-400">{order.customer} · {order.items} منتجات · {order.total.toLocaleString()} ل.س</p>
+                  </div>
                 </div>
+                <span className="text-xs text-gray-500">{order.date}</span>
               </div>
-              <span className="text-xs text-gray-500">{order.date}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </motion.div>
     </div>
   )

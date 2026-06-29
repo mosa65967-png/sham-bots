@@ -1,15 +1,56 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Bot, Plus, ExternalLink, Settings } from 'lucide-react'
-
-const mockBots = [
-  { id: 'b1', name: 'بوت المتجر', platform: 'telegram', status: 'active', createdAt: '2026-06-01', type: 'متجر إلكتروني' },
-  { id: 'b2', name: 'بوت خدمة العملاء', platform: 'whatsapp', status: 'draft', createdAt: '2026-06-15', type: 'خدمة عملاء' },
-]
+import { Bot, Plus, ExternalLink } from 'lucide-react'
 
 export default function DashboardBotsPage() {
+  const [bots, setBots] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchBots = async () => {
+      try {
+        const userRes = await fetch('/api/v1/auth/me')
+        if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
+        const userData = await userRes.json()
+
+        const botsRes = await fetch(`/api/v1/bots?userId=${userData.id}`)
+        if (!botsRes.ok) throw new Error('فشل في تحميل البوتات')
+        const botsData = await botsRes.json()
+        setBots(botsData.data ?? [])
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBots()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="glass-card text-center !py-16">
+          <p className="text-gray-400">جاري تحميل البوتات...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="glass-card text-center !py-16">
+          <p className="text-red-400 mb-2">حدث خطأ في تحميل البوتات</p>
+          <p className="text-gray-500 text-sm">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -24,7 +65,7 @@ export default function DashboardBotsPage() {
           </Link>
         </div>
 
-        {mockBots.length === 0 ? (
+        {bots.length === 0 ? (
           <div className="glass-card text-center !py-16">
             <Bot className="w-16 h-16 text-gray-600 mx-auto mb-4" />
             <h3 className="font-heading font-bold text-xl text-white mb-2">لا توجد بوتات بعد</h3>
@@ -36,7 +77,7 @@ export default function DashboardBotsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {mockBots.map((bot) => (
+            {bots.map((bot) => (
               <div key={bot.id} className="glass-card flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center">
