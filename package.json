@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "postinstall": "prisma generate && prisma db push",
+    "start": "node prisma/push.js && next start",
+    "postinstall": "prisma generate",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
