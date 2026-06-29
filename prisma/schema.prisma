@@ -12,8 +12,11 @@ model User {
   telegramId   BigInt?  @unique
   whatsappId   String?  @unique
   email        String?  @unique
+  emailVerified DateTime? @map("email_verified")
   phone        String?  @unique
-  nameAr       String   @map("name_ar")
+  name         String?
+  nameAr       String   @default("") @map("name_ar")
+  image        String?
   governorateId String? @map("governorate_id")
   districtId   String?  @map("district_id")
   passwordHash String?  @map("password_hash")
@@ -24,6 +27,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  accounts          Account[]
+  sessions          Session[]
   bots              Bot[]
   telegramListings  TelegramListing[]
   restaurants       Restaurant[]
@@ -35,6 +40,47 @@ model User {
   wallets           Wallet[]
 
   @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @map("refresh_token")
+  access_token      String? @map("access_token")
+  expires_at        Int?    @map("expires_at")
+  token_type        String? @map("token_type")
+  scope             String?
+  id_token          String? @map("id_token")
+  session_state     String? @map("session_state")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+  attempts   Int    @default(0)
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model Bot {

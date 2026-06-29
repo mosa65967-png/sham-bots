@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 import { verifySession, PROTECTED_ROUTES, AUTH_ROUTES } from '@/lib/auth'
 
 const STATIC_PATHS = ['/_next', '/favicon.ico', '/images', '/fonts', '/icon.svg']
@@ -10,13 +11,23 @@ function isMutatingMethod(method: string): boolean {
   return ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)
 }
 
-async function verifyAuth(token: string | undefined): Promise<Record<string, unknown> | null> {
+async function getSession(token: string | undefined) {
   if (!token) return null
   try {
-    return await verifySession(token)
-  } catch {
-    return null
-  }
+    const nextAuth = await getToken({ req: { headers: { cookie: `next-auth.session-token=${token}` } } as unknown as NextRequest, secret: process.env.NEXTAUTH_SECRET })
+    if (nextAuth?.userId) return { userId: nextAuth.userId as string, role: nextAuth.role as string || 'user' }
+  } catch {}
+  try {
+    const legacy = await verifySession(token)
+    if (legacy) return { userId: legacy.userId as string, role: legacy.role as string || 'user' }
+  } catch {}
+  return null
+}
+
+function getTokenFromRequest(request: NextRequest): string | undefined {
+  return request.cookies.get('next-auth.session-token')?.value
+    || request.cookies.get('__Secure-next-auth.session-token')?.value
+    || request.cookies.get('session')?.value
 }
 
 export async function middleware(request: NextRequest) {
@@ -27,8 +38,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // CSRF: reject mutating requests from external origins
-  if (isMutatingMethod(method) && !pathname.startsWith('/api/v1/auth/')) {
+  if (isMutatingMethod(method) && !pathname.startsWith('/api/v1/auth/') && !pathname.startsWith('/api/auth/')) {
     const origin = request.headers.get('origin')
     const referer = request.headers.get('referer')
     if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
@@ -39,12 +49,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Auth check for protected routes
   if (PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
-    const token = request.cookies.get('session')?.value
-    const session = await verifyAuth(token)
+    const token = getTokenFromRequest(request)
+    const session = await getSession(token)
     if (!session) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      const loginUrl = new URL('/auth/login', request.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
     }
     if (pathname.startsWith('/admin') && session.role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -54,18 +65,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in users away from auth pages
   if (AUTH_ROUTES.some(route => pathname.startsWith(route))) {
-    const token = request.cookies.get('session')?.value
-    const session = await verifyAuth(token)
+    const token = getTokenFromRequest(request)
+    const session = await getSession(token)
     if (session) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
   const response = NextResponse.next()
-
-  // Security headers
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -76,7 +84,6 @@ export async function middleware(request: NextRequest) {
     "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
   )
 
-  // CORS for API
   if (pathname.startsWith('/api/')) {
     const origin = request.headers.get('origin') || ''
     if (ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {

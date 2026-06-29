@@ -3,19 +3,43 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { motion } from 'framer-motion'
-import { Bot, ArrowLeft, User, Phone, MapPin } from 'lucide-react'
-import { governorates } from '@/data/governorates'
+import { Bot, User, Phone, Lock, ArrowLeft } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [name, setName] = useState('')
+  const [nameAr, setNameAr] = useState('')
   const [phone, setPhone] = useState('')
-  const [governorate, setGovernorate] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    router.push('/auth/login?registered=true')
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nameAr, phone, password }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        const result = await signIn('password', { phone, password, redirect: false })
+        if (result?.ok) {
+          router.push('/dashboard')
+          router.refresh()
+        }
+      } else {
+        setError(data.error || 'فشل إنشاء الحساب')
+      }
+    } catch {
+      setError('حدث خطأ في الاتصال')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -31,23 +55,20 @@ export default function RegisterPage() {
             <Bot className="w-8 h-8 text-white" />
           </div>
           <h1 className="font-heading text-2xl font-bold text-white">إنشاء حساب جديد</h1>
-          <p className="text-gray-400 mt-2">أدخل بياناتك لبدء رحلتك الرقمية</p>
+          <p className="text-gray-400 mt-2">أدخل بياناتك لإنشاء حساب في شام بوتس</p>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">{error}</div>
+        )}
+
         <div className="glass-card">
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm text-gray-300 mb-2">الاسم الكامل</label>
+              <label className="block text-sm text-gray-300 mb-2">الاسم</label>
               <div className="relative">
                 <User className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="محمد أحمد"
-                  className="input-field pr-12"
-                  required
-                />
+                <input type="text" value={nameAr} onChange={(e) => setNameAr(e.target.value)} placeholder="الاسم الكامل" className="input-field pr-12" required />
               </div>
             </div>
 
@@ -55,55 +76,31 @@ export default function RegisterPage() {
               <label className="block text-sm text-gray-300 mb-2">رقم الهاتف</label>
               <div className="relative">
                 <Phone className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="09XX XXX XXX"
-                  className="input-field pr-12"
-                  dir="ltr"
-                  required
-                />
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09XX XXX XXX" className="input-field pr-12" dir="ltr" required />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-300 mb-2">المحافظة</label>
+              <label className="block text-sm text-gray-300 mb-2">كلمة المرور</label>
               <div className="relative">
-                <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
-                <select
-                  value={governorate}
-                  onChange={(e) => setGovernorate(e.target.value)}
-                  className="input-field pr-12 appearance-none"
-                  required
-                >
-                  <option value="">اختر محافظتك</option>
-                  {governorates.map((gov) => (
-                    <option key={gov.id} value={gov.id}>
-                      {gov.nameAr}
-                    </option>
-                  ))}
-                </select>
+                <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="أقل شيء 6 أحرف" className="input-field pr-12" required minLength={6} />
               </div>
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              إنشاء الحساب
+            <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-50">
+              {loading ? 'جاري...' : 'إنشاء الحساب'}
               <ArrowLeft className="inline-block w-4 h-4 mr-2" />
             </button>
 
             <p className="text-center text-sm text-gray-500">
               لديك حساب بالفعل؟{' '}
-              <Link href="/auth/login" className="text-primary-400 hover:text-primary-300 font-medium">
-                تسجيل الدخول
-              </Link>
+              <Link href="/auth/login" className="text-primary-400 hover:text-primary-300">تسجيل الدخول</Link>
             </p>
 
-            <p className="text-center text-xs text-gray-600">
+            <p className="text-center text-xs text-gray-500">
               بالتسجيل أنت توافق على{' '}
               <Link href="/terms" className="text-primary-400 hover:text-primary-300">شروط الخدمة</Link>
-              {' '}و{' '}
-              <Link href="/privacy" className="text-primary-400 hover:text-primary-300">سياسة الخصوصية</Link>
             </p>
           </form>
         </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from '@/components/shared/Providers'
+import AuthProvider from '@/components/auth-provider'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl" className="dark">
       <body className="min-h-screen bg-dark-primary">
+        <AuthProvider>
         <Providers>
           <Header />
           <main className="min-h-screen">
@@ -48,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Footer />
         </Providers>
+        </AuthProvider>
       </body>
     </html>
   )
