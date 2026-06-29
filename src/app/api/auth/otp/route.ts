@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
       message: 'تم إرسال رمز التحقق',
       debug: process.env.NODE_ENV !== 'production' ? { otp } : undefined,
     })
-  } catch {
+  } catch (error) {
+    console.error('[OTP]', error)
     return NextResponse.json({ success: false, error: 'فشل إرسال رمز التحقق' }, { status: 500 })
   }
 }

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 12)
     const user = await prisma.user.create({
-      data: { phone, nameAr, passwordHash, role: 'user', isVerified: true },
+      data: { phone, name: nameAr, nameAr, passwordHash, role: 'user', isVerified: true },
     })
     await prisma.wallet.create({
       data: { userId: user.id },
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
     })
     return response
   } catch (error) {
+    console.error('[REGISTER]', error)
     return NextResponse.json({ success: false, error: 'فشل إنشاء الحساب' }, { status: 500 })
   }
 }
