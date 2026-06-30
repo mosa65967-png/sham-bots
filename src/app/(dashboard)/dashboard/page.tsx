@@ -64,7 +64,7 @@ export default function DashboardPage() {
 
   const quickActions = [
     { label: 'إنشاء بوت جديد', href: '/dashboard/bots/new', icon: Bot, color: 'text-primary-400' },
-    { label: 'إضافة منتج', href: '/dashboard/merchant/products/new', icon: ShoppingBag, color: 'text-secondary-400' },
+    { label: 'إدارة المتجر', href: '/dashboard/merchant', icon: ShoppingBag, color: 'text-secondary-400' },
     { label: 'عرض التذاكر', href: '/dashboard/tickets', icon: Headphones, color: 'text-orange-400' },
     { label: 'شحن المحفظة', href: '/dashboard/wallet', icon: Wallet, color: 'text-blue-400' },
   ]

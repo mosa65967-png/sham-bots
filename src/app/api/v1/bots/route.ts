@@ -4,13 +4,18 @@ import { verifySession } from '@/lib/auth'
 import { botSchema } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
+  const token = request.cookies.get('session')?.value || request.cookies.get('next-auth.session-token')?.value || request.cookies.get('__Secure-next-auth.session-token')?.value
+  const session = token ? await verifySession(token) : null
+  if (!session) {
+    return NextResponse.json({ success: false, error: 'غير مصرح. الرجاء تسجيل الدخول.' }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('userId')
   const limit = Math.min(Number(searchParams.get('limit')) || 50, 100)
   const offset = Number(searchParams.get('offset')) || 0
 
   try {
-    const where = userId ? { userId } : {}
+    const where = { userId: session.userId as string }
     const [data, total] = await Promise.all([
       prisma.bot.findMany({
         where,
@@ -23,7 +28,7 @@ export async function GET(request: NextRequest) {
     ])
     return NextResponse.json({ success: true, data, total })
   } catch {
-    return NextResponse.json({ success: true, data: [], total: 0 })
+    return NextResponse.json({ success: false, error: 'فشل تحميل البوتات' }, { status: 500 })
   }
 }
 

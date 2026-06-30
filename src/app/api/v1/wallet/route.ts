@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { verifySession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get('session')?.value
+  const token = request.cookies.get('session')?.value || request.cookies.get('next-auth.session-token')?.value || request.cookies.get('__Secure-next-auth.session-token')?.value
   const session = await verifySession(token || '')
   if (!session) {
     return NextResponse.json({ success: false, error: 'غير مصرح' }, { status: 401 })

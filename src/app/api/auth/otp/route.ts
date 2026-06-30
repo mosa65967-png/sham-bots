@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limiter'
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -7,6 +8,8 @@ function generateOTP(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+
     const { phone } = await request.json()
     if (!phone) {
       return NextResponse.json({ success: false, error: 'رقم الهاتف مطلوب' }, { status: 400 })
@@ -15,6 +18,10 @@ export async function POST(request: NextRequest) {
     const normalizedPhone = phone.replace(/[^0-9]/g, '')
     if (normalizedPhone.length < 9) {
       return NextResponse.json({ success: false, error: 'رقم هاتف غير صحيح' }, { status: 400 })
+    }
+
+    if (!checkRateLimit(`otp:${normalizedPhone}`, 3, 120_000)) {
+      return NextResponse.json({ success: false, error: 'طلبات كثيرة. الرجاء الانتظار دقيقتين.' }, { status: 429 })
     }
 
     let user = await prisma.user.findUnique({ where: { phone: normalizedPhone } })

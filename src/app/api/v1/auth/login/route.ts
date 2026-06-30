@@ -3,9 +3,12 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { createSession } from '@/lib/auth'
 import { loginSchema } from '@/lib/validations'
+import { checkRateLimit } from '@/lib/rate-limiter'
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+
     const body = await request.json()
     const parsed = loginSchema.safeParse(body)
     if (!parsed.success) {
@@ -13,6 +16,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { phone, password } = parsed.data
+    if (!checkRateLimit(`login:${phone}`, 10, 60_000)) {
+      return NextResponse.json({ success: false, error: 'طلبات كثيرة. الرجاء الانتظار دقيقة.' }, { status: 429 })
+    }
+
     const user = await prisma.user.findUnique({ where: { phone } })
     if (!user) {
       return NextResponse.json({ success: false, error: 'رقم الهاتف غير مسجل. الرجاء إنشاء حساب جديد.' }, { status: 401 })

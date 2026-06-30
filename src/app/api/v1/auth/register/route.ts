@@ -3,9 +3,15 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { createSession } from '@/lib/auth'
 import { registerSchema } from '@/lib/validations'
+import { checkRateLimit } from '@/lib/rate-limiter'
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    if (!checkRateLimit(`register:${ip}`, 10, 60_000)) {
+      return NextResponse.json({ success: false, error: 'طلبات كثيرة. الرجاء الانتظار.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const parsed = registerSchema.safeParse(body)
     if (!parsed.success) {

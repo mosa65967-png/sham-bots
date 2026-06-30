@@ -4,16 +4,20 @@ import { verifySession } from '@/lib/auth'
 import { ticketSchema } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
+  const token = request.cookies.get('session')?.value || request.cookies.get('next-auth.session-token')?.value || request.cookies.get('__Secure-next-auth.session-token')?.value
+  const session = token ? await verifySession(token) : null
+  if (!session) {
+    return NextResponse.json({ success: false, error: 'غير مصرح. الرجاء تسجيل الدخول.' }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const limit = Math.min(Number(searchParams.get('limit')) || 50, 100)
   const offset = Number(searchParams.get('offset')) || 0
-  const userId = searchParams.get('userId')
   const status = searchParams.get('status')
   const category = searchParams.get('category')
 
   try {
-    const where: Record<string, unknown> = {}
-    if (userId) where.userId = userId
+    const where: Record<string, unknown> = { userId: session.userId as string }
     if (status) where.status = status
     if (category) where.category = category
 
@@ -24,7 +28,6 @@ export async function GET(request: NextRequest) {
         skip: offset,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: { select: { nameAr: true, phone: true } },
           bot: { select: { name: true } },
           _count: { select: { messages: true } },
         },
@@ -34,7 +37,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data, total })
   } catch (error) {
     console.error('[TICKETS_LIST]', error)
-    return NextResponse.json({ success: true, data: [], total: 0 })
+    return NextResponse.json({ success: false, error: 'فشل تحميل التذاكر' }, { status: 500 })
   }
 }
 
