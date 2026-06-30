@@ -2,13 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
 import { motion } from 'framer-motion'
 import { Bot, User, Phone, Lock, ArrowLeft } from 'lucide-react'
 
 export default function RegisterPage() {
-  const router = useRouter()
   const [nameAr, setNameAr] = useState('')
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
@@ -27,13 +24,7 @@ export default function RegisterPage() {
       })
       const data = await res.json()
       if (data.success) {
-        const result = await signIn('password', { phone, password, redirect: false })
-        if (result?.ok) {
-          router.push('/dashboard')
-          router.refresh()
-        } else {
-          setError('تم إنشاء الحساب بنجاح. يمكنك تسجيل الدخول الآن')
-        }
+        window.location.href = '/auth/login?registered=true'
       } else {
         setError(data.error || 'فشل إنشاء الحساب')
       }

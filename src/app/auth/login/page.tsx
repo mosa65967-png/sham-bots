@@ -2,13 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-
 import { motion } from 'framer-motion'
 import { Bot, ArrowLeft, Phone, Chrome } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [step, setStep] = useState<'phone' | 'otp' | 'password'>('phone')
@@ -52,8 +49,7 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (data.success) {
-        router.push('/dashboard')
-        router.refresh()
+        window.location.href = '/dashboard'
       } else {
         setError(data.error || 'رمز التحقق غير صحيح أو منتهي الصلاحية')
       }
@@ -76,14 +72,13 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (data.success) {
-        router.push('/dashboard')
-        router.refresh()
+        window.location.href = '/dashboard'
       } else {
         setError(data.error || 'رقم الهاتف أو كلمة المرور غير صحيحة')
+        setLoading(false)
       }
     } catch {
       setError('حدث خطأ في تسجيل الدخول')
-    } finally {
       setLoading(false)
     }
   }
