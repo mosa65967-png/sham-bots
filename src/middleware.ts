@@ -1,33 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { verifySession, PROTECTED_ROUTES, AUTH_ROUTES } from '@/lib/auth'
 
+const PROTECTED_ROUTES = ['/dashboard', '/admin', '/agent']
+const AUTH_ROUTES = ['/auth/login', '/auth/register']
 const STATIC_PATHS = ['/_next', '/favicon.ico', '/images', '/fonts', '/icon.svg']
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sham-bots-production.up.railway.app'
 const ALLOWED_ORIGINS = [SITE_URL, 'http://localhost:3000', 'http://localhost:3001']
 
 function isMutatingMethod(method: string): boolean {
   return ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)
-}
-
-async function getSession(token: string | undefined) {
-  if (!token) return null
-  try {
-    const nextAuth = await getToken({ req: { headers: { cookie: `next-auth.session-token=${token}` } } as unknown as NextRequest, secret: process.env.NEXTAUTH_SECRET })
-    if (nextAuth?.userId) return { userId: nextAuth.userId as string, role: nextAuth.role as string || 'user' }
-  } catch {}
-  try {
-    const legacy = await verifySession(token)
-    if (legacy) return { userId: legacy.userId as string, role: legacy.role as string || 'user' }
-  } catch {}
-  return null
-}
-
-function getTokenFromRequest(request: NextRequest): string | undefined {
-  return request.cookies.get('next-auth.session-token')?.value
-    || request.cookies.get('__Secure-next-auth.session-token')?.value
-    || request.cookies.get('session')?.value
 }
 
 export async function middleware(request: NextRequest) {
@@ -49,10 +31,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const session = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+
   if (PROTECTED_ROUTES.some(route => pathname.startsWith(route))) {
-    const token = getTokenFromRequest(request)
-    const session = await getSession(token)
-    if (!session) {
+    if (!session?.userId) {
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(loginUrl)
@@ -66,9 +48,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (AUTH_ROUTES.some(route => pathname.startsWith(route))) {
-    const token = getTokenFromRequest(request)
-    const session = await getSession(token)
-    if (session) {
+    if (session?.userId) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }

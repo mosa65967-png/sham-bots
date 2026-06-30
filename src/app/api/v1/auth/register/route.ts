@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
-import { createSession } from '@/lib/auth'
 import { registerSchema } from '@/lib/validations'
 import { checkRateLimit } from '@/lib/rate-limiter'
+import { encode } from 'next-auth/jwt'
+
+const COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token'
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,12 +34,17 @@ export async function POST(request: NextRequest) {
       data: { userId: user.id },
     })
 
-    const token = await createSession({ userId: user.id, role: user.role })
+    const token = await encode({
+      token: { userId: user.id, role: user.role },
+      secret: process.env.NEXTAUTH_SECRET!,
+      maxAge: 86400,
+    })
+
     const response = NextResponse.json({ success: true, data: { id: user.id, name: user.nameAr, role: user.role } }, { status: 201 })
-    response.cookies.set('session', token, {
+    response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
       maxAge: 86400,
     })

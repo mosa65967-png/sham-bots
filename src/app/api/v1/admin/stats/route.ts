@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifySession } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('session')?.value
-    const session = token ? await verifySession(token) : null
+    const session = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     if (!session || session.role !== 'admin') {
       return NextResponse.json({ success: false, error: 'غير مصرح. صلاحيات المشرف مطلوبة.' }, { status: 403 })
     }

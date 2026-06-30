@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { createSession } from '@/lib/auth'
+import { encode } from 'next-auth/jwt'
+
+const COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,15 +30,25 @@ export async function POST(request: NextRequest) {
       data: { otpCode: null, otpExpires: null, otpAttempts: { increment: 1 } },
     })
 
-    const token = await createSession({ userId: user.id, role: user.role })
-    const response = NextResponse.json({ success: true, data: { id: user.id, name: user.nameAr, role: user.role } })
-    response.cookies.set('session', token, {
+    const token = await encode({
+      token: { userId: user.id, role: user.role },
+      secret: process.env.NEXTAUTH_SECRET!,
+      maxAge: 86400,
+    })
+
+    const response = NextResponse.json({
+      success: true,
+      data: { id: user.id, name: user.nameAr, role: user.role },
+    })
+
+    response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
       maxAge: 86400,
     })
+
     return response
   } catch {
     return NextResponse.json({ success: false, error: 'فشل التحقق من الرمز' }, { status: 500 })

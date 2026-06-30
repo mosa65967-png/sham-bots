@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
-import { createSession } from '@/lib/auth'
 import { loginSchema } from '@/lib/validations'
 import { checkRateLimit } from '@/lib/rate-limiter'
+import { encode } from 'next-auth/jwt'
+
+const COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token'
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-
     const body = await request.json()
     const parsed = loginSchema.safeParse(body)
     if (!parsed.success) {
@@ -35,23 +35,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const token = await createSession({ userId: user.id, role: user.role })
-    const response = NextResponse.json({ success: true, data: { id: user.id, name: user.nameAr, role: user.role, hasPassword: !!user.passwordHash } })
-    response.cookies.set('session', token, {
+    const token = await encode({
+      token: { userId: user.id, role: user.role },
+      secret: process.env.NEXTAUTH_SECRET!,
+      maxAge: 86400,
+    })
+
+    const response = NextResponse.json({
+      success: true,
+      data: { id: user.id, name: user.nameAr, role: user.role, hasPassword: !!user.passwordHash },
+    })
+
+    response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
       maxAge: 86400,
     })
-    const csrfCookie = btoa(JSON.stringify({ t: Date.now(), r: Math.random().toString(36).slice(2) }))
-    response.cookies.set('csrf-token', csrfCookie, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-      maxAge: 86400,
-    })
+
     return response
   } catch (error) {
     return NextResponse.json({ success: false, error: 'فشل تسجيل الدخول' }, { status: 500 })

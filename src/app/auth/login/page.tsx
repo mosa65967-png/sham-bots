@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Bot, ArrowLeft, Phone, Chrome } from 'lucide-react'
@@ -8,15 +8,24 @@ import { Bot, ArrowLeft, Phone, Chrome } from 'lucide-react'
 export default function LoginPage() {
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [step, setStep] = useState<'phone' | 'otp' | 'password'>('phone')
+  const [step, setStep] = useState<'phone' | 'otp' | 'password'>('password')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
+  const [otpCode, setOtpCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+
+  useEffect(() => {
+    if (window.location.search.includes('registered=true')) {
+      setSuccessMessage('تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن')
+    }
+  }, [])
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
+    setOtpCode('')
     try {
       const res = await fetch('/api/auth/otp', {
         method: 'POST',
@@ -26,6 +35,10 @@ export default function LoginPage() {
       const data = await res.json()
       if (data.success) {
         setStep('otp')
+        if (data.otp) {
+          setOtpCode(data.otp)
+          setOtp(data.otp.split(''))
+        }
       } else {
         setError(data.error || 'فشل إرسال رمز التحقق')
       }
@@ -92,6 +105,7 @@ export default function LoginPage() {
   const handleResendOTP = async () => {
     setError('')
     setLoading(true)
+    setOtpCode('')
     try {
       const res = await fetch('/api/auth/otp', {
         method: 'POST',
@@ -99,7 +113,10 @@ export default function LoginPage() {
         body: JSON.stringify({ phone }),
       })
       const data = await res.json()
-      if (data.success) { /* sent */ }
+      if (data.success && data.otp) {
+        setOtpCode(data.otp)
+        setOtp(data.otp.split(''))
+      }
     } catch {
       setError('فشل إعادة الإرسال')
     } finally {
@@ -126,6 +143,12 @@ export default function LoginPage() {
             {step === 'phone' ? 'أدخل رقم هاتفك للتسجيل أو تسجيل الدخول' : step === 'otp' ? 'أدخل رمز التأكيد المرسل إلى هاتفك' : 'أدخل كلمة المرور للحساب'}
           </p>
         </div>
+
+        {successMessage && (
+          <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center">
+            {successMessage}
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
@@ -203,6 +226,11 @@ export default function LoginPage() {
                 <label className="block text-sm text-gray-300 mb-4 text-center">
                   تم إرسال رمز التأكيد إلى <span className="text-white" dir="ltr">{phone}</span>
                 </label>
+                {otpCode && (
+                  <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-center text-lg font-bold tracking-widest" dir="ltr">
+                    {otpCode}
+                  </div>
+                )}
                 <div className="flex gap-2 justify-center" dir="ltr">
                   {otp.map((digit, i) => (
                     <input
@@ -232,12 +260,14 @@ export default function LoginPage() {
                     />
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 text-center mt-3">
-                  لم يصلك الرمز؟{' '}
-                  <button type="button" onClick={handleResendOTP} disabled={loading} className="text-primary-400 hover:text-primary-300 disabled:opacity-50">
-                    إعادة الإرسال
-                  </button>
-                </p>
+                {!otpCode && (
+                  <p className="text-xs text-gray-500 text-center mt-3">
+                    لم يصلك الرمز؟{' '}
+                    <button type="button" onClick={handleResendOTP} disabled={loading} className="text-primary-400 hover:text-primary-300 disabled:opacity-50">
+                      إعادة الإرسال
+                    </button>
+                  </p>
+                )}
               </div>
 
               <button type="submit" disabled={loading || otp.some(d => !d)} className="btn-primary w-full disabled:opacity-50">

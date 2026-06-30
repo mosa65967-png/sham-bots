@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifySession } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { ticketSchema } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get('session')?.value || request.cookies.get('next-auth.session-token')?.value || request.cookies.get('__Secure-next-auth.session-token')?.value
-  const session = token ? await verifySession(token) : null
-  if (!session) {
+  const session = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+  if (!session?.userId) {
     return NextResponse.json({ success: false, error: 'غير مصرح. الرجاء تسجيل الدخول.' }, { status: 401 })
   }
 
@@ -43,9 +42,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('session')?.value
-    const session = token ? await verifySession(token) : null
-    if (!session) {
+    const session = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    if (!session?.userId) {
       return NextResponse.json({ success: false, error: 'غير مصرح. الرجاء تسجيل الدخول.' }, { status: 401 })
     }
 
