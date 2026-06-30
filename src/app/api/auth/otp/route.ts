@@ -17,13 +17,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'رقم هاتف غير صحيح' }, { status: 400 })
     }
 
-    await prisma.verificationToken.deleteMany({ where: { identifier: normalizedPhone } })
+    let user = await prisma.user.findUnique({ where: { phone: normalizedPhone } })
+    if (!user) {
+      user = await prisma.user.create({
+        data: { phone: normalizedPhone, nameAr: normalizedPhone, role: 'user', isVerified: true },
+      })
+      await prisma.wallet.create({ data: { userId: user.id } }).catch(() => {})
+    }
 
     const otp = generateOTP()
     const expires = new Date(Date.now() + 5 * 60 * 1000)
 
-    await prisma.verificationToken.create({
-      data: { identifier: normalizedPhone, token: otp, expires },
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { otpCode: otp, otpExpires: expires, otpAttempts: 0 },
     })
 
     console.log(`[OTP] To ${normalizedPhone}: ${otp}`)

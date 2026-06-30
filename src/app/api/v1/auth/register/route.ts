@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 12)
     const user = await prisma.user.create({
-      data: { phone, name: nameAr, nameAr, passwordHash, role: 'user', isVerified: true },
+      data: { phone, nameAr, passwordHash, role: 'user', isVerified: true },
     })
     await prisma.wallet.create({
       data: { userId: user.id },

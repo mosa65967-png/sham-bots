@@ -47,20 +47,14 @@ export const authOptions: NextAuthOptions = {
         const phone = credentials.phone.replace(/[^0-9]/g, '')
         if (phone.length < 9) return null
 
-        const otpRecord = await prisma.verificationToken.findFirst({
-          where: { identifier: phone, token: credentials.otp, expires: { gte: new Date() } },
+        const user = await prisma.user.findUnique({ where: { phone } })
+        if (!user || !user.otpCode || !user.otpExpires) return null
+        if (user.otpCode !== credentials.otp || user.otpExpires < new Date()) return null
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { otpCode: null, otpExpires: null, otpAttempts: { increment: 1 } },
         })
-        if (!otpRecord) return null
-
-        await prisma.verificationToken.deleteMany({ where: { identifier: phone } })
-
-        let user = await prisma.user.findUnique({ where: { phone } })
-        if (!user) {
-          user = await prisma.user.create({
-            data: { phone, name: phone, nameAr: phone, role: 'user', isVerified: true },
-          })
-          await prisma.wallet.create({ data: { userId: user.id } })
-        }
 
         return { id: user.id, name: user.nameAr || user.phone, role: user.role, phone: user.phone || undefined }
       },
