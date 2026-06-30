@@ -31,6 +31,8 @@ export default function RegisterPage() {
         if (result?.ok) {
           router.push('/dashboard')
           router.refresh()
+        } else {
+          setError('تم إنشاء الحساب لكن فشل تسجيل الدخول تلقائياً')
         }
       } else {
         setError(data.error || 'فشل إنشاء الحساب')
