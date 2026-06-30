@@ -1,29 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signIn, useSession } from 'next-auth/react'
+
 import { motion } from 'framer-motion'
 import { Bot, ArrowLeft, Phone, Chrome } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { data: session } = useSession()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [step, setStep] = useState<'phone' | 'otp' | 'password'>('phone')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (session) {
-      router.push('/dashboard')
-    }
-  }, [session, router])
-
-  if (session) return null
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,12 +45,17 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const code = otp.join('')
-      const result = await signIn('phone-otp', { phone, otp: code, redirect: false })
-      if (result?.ok) {
+      const res = await fetch('/api/v1/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp: code }),
+      })
+      const data = await res.json()
+      if (data.success) {
         router.push('/dashboard')
         router.refresh()
       } else {
-        setError('رمز التحقق غير صحيح أو منتهي الصلاحية')
+        setError(data.error || 'رمز التحقق غير صحيح أو منتهي الصلاحية')
       }
     } catch {
       setError('حدث خطأ في التحقق من الرمز')
@@ -73,12 +69,17 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const result = await signIn('password', { phone, password, redirect: false })
-      if (result?.ok) {
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      })
+      const data = await res.json()
+      if (data.success) {
         router.push('/dashboard')
         router.refresh()
       } else {
-        setError('رقم الهاتف أو كلمة المرور غير صحيحة')
+        setError(data.error || 'رقم الهاتف أو كلمة المرور غير صحيحة')
       }
     } catch {
       setError('حدث خطأ في تسجيل الدخول')
@@ -89,12 +90,8 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true)
-    try {
-      await signIn('google', { callbackUrl: '/dashboard' })
-    } catch {
-      setError('فشل تسجيل الدخول عبر Google')
-      setLoading(false)
-    }
+    setError('تسجيل الدخول عبر Google غير متاح حالياً')
+    setLoading(false)
   }
 
   const handleResendOTP = async () => {

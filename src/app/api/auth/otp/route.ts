@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'تم إرسال رمز التحقق',
-      debug: process.env.NODE_ENV !== 'production' ? { otp } : undefined,
+      otp: process.env.SMS_PROVIDER ? undefined : otp,
     })
   } catch (error) {
     console.error('[OTP]', error)
