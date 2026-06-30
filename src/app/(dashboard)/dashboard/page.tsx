@@ -20,31 +20,32 @@ export default function DashboardPage() {
         const userRes = await fetch('/api/v1/auth/me')
         if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
         const userData = await userRes.json()
-        if (!userData?.id) throw new Error('لم يتم العثور على معرف المستخدم')
-        setUser(userData)
+        const user = userData?.data
+        if (!user?.id) throw new Error('لم يتم العثور على معرف المستخدم')
+        setUser(user)
 
         const [walletRes, ordersRes, botsRes, ticketsRes] = await Promise.all([
           fetch('/api/v1/wallet'),
-          fetch(`/api/v1/orders?userId=${userData.id}`),
-          fetch(`/api/v1/bots?userId=${userData.id}`),
-          fetch(`/api/v1/tickets?userId=${userData.id}`),
+          fetch('/api/v1/orders'),
+          fetch('/api/v1/bots'),
+          fetch('/api/v1/tickets'),
         ])
 
         if (walletRes.ok) {
           const walletData = await walletRes.json()
-          setWallet(walletData)
+          setWallet(walletData.data)
         }
         if (ordersRes.ok) {
           const ordersData = await ordersRes.json()
-          setOrdersCount(ordersData.total ?? ordersData.data?.length ?? 0)
+          setOrdersCount(ordersData.data?.length ?? 0)
         }
         if (botsRes.ok) {
           const botsData = await botsRes.json()
-          setBotsCount(botsData.total ?? botsData.data?.length ?? 0)
+          setBotsCount(botsData.data?.length ?? 0)
         }
         if (ticketsRes.ok) {
           const ticketsData = await ticketsRes.json()
-          setTicketsCount(ticketsData.total ?? ticketsData.data?.length ?? 0)
+          setTicketsCount(ticketsData.data?.length ?? 0)
         }
       } catch (err: any) {
         setError(err.message)
@@ -90,7 +91,7 @@ export default function DashboardPage() {
         <div className="mb-8">
           <h1 className="font-heading text-3xl font-bold text-white">
             {user ? (
-              <>مرحباً بك يا <span className="gradient-text">{user.nameAr}</span></>
+              <>مرحباً بك يا <span className="gradient-text">{user.nameAr || user.phone}</span></>
             ) : (
               <>مرحباً بك في <span className="gradient-text">لوحة التحكم</span></>
             )}

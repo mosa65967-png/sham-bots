@@ -14,8 +14,8 @@ export default function DashboardMerchantPage() {
       try {
         const res = await fetch('/api/v1/auth/me')
         if (!res.ok) throw new Error('فشل في تحميل البيانات')
-        const data = await res.json()
-        setUser(data)
+        const d = await res.json()
+        setUser(d.data || d)
       } catch (err: any) {
         setError(err.message)
       } finally {

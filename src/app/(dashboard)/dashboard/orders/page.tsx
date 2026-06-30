@@ -27,15 +27,10 @@ export default function DashboardOrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const userRes = await fetch('/api/v1/auth/me')
-        if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
-        const userData = await userRes.json()
-        if (!userData?.id) throw new Error('لم يتم العثور على معرف المستخدم')
-
-        const ordersRes = await fetch(`/api/v1/orders?userId=${userData.id}`)
+        const ordersRes = await fetch('/api/v1/orders')
         if (!ordersRes.ok) throw new Error('فشل في تحميل الطلبات')
         const ordersData = await ordersRes.json()
-        setOrders(Array.isArray(ordersData?.data) ? ordersData.data : Array.isArray(ordersData) ? ordersData : [])
+        setOrders(Array.isArray(ordersData?.data) ? ordersData.data : [])
       } catch (err: any) {
         setError(err.message)
       } finally {

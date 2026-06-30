@@ -15,7 +15,7 @@ export default function DashboardWalletPage() {
         const res = await fetch('/api/v1/wallet')
         if (!res.ok) throw new Error('فشل في تحميل بيانات المحفظة')
         const data = await res.json()
-        setWallet(data)
+        setWallet(data.data)
       } catch (err: any) {
         setError(err.message)
       } finally {

@@ -113,7 +113,7 @@ export default function RestaurantMenuPage() {
                 </span>
                 {restaurant.deliveryAvailable && (
                   <span className="px-3 py-1 rounded-full bg-secondary-500/10 text-secondary-400 text-xs">
-                    توصيل: {restaurant.deliveryFee.toLocaleString()} ل.س
+                    توصيل: {(restaurant.deliveryFee ?? 0).toLocaleString()} ل.س
                   </span>
                 )}
               </div>

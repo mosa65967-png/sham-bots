@@ -16,11 +16,12 @@ export default function DashboardSettingsPage() {
       try {
         const res = await fetch('/api/v1/auth/me')
         if (!res.ok) throw new Error('فشل في تحميل البيانات')
-        const data = await res.json()
+        const d = await res.json()
+        const p = d?.data || d
         setProfile({
-          name: data.nameAr || data.name || '',
-          phone: data.phone || '',
-          email: data.email || '',
+          name: p.nameAr || p.name || '',
+          phone: p.phone || '',
+          email: p.email || '',
         })
       } catch (err: any) {
         setError(err.message)

@@ -12,12 +12,7 @@ export default function DashboardTicketsPage() {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        const userRes = await fetch('/api/v1/auth/me')
-        if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
-        const userData = await userRes.json()
-        if (!userData?.id) throw new Error('لم يتم العثور على معرف المستخدم')
-
-        const ticketsRes = await fetch(`/api/v1/tickets?userId=${userData.id}`)
+        const ticketsRes = await fetch('/api/v1/tickets')
         if (!ticketsRes.ok) throw new Error('فشل في تحميل التذاكر')
         const ticketsData = await ticketsRes.json()
         setTickets(Array.isArray(ticketsData?.data) ? ticketsData.data : [])

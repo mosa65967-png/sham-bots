@@ -64,7 +64,8 @@ export default function StoreDetailPage() {
     return `${p?.name} x${qty}`
   }).join('\n')
 
-  const whatsappUrl = `https://wa.me/${store.whatsapp}?text=طلب جديد من ${store.name}:\n${orderMessage}\n\nالمجموع: ${totalPrice.toLocaleString()} ل.س`
+  const whatsapp = store.whatsapp ? store.whatsapp.replace(/[^0-9]/g, '') : ''
+  const whatsappUrl = whatsapp ? `https://wa.me/${whatsapp}?text=طلب جديد من ${store.name}:\n${orderMessage}\n\nالمجموع: ${totalPrice.toLocaleString()} ل.س` : ''
 
   return (
     <div className="min-h-screen py-8">
@@ -93,7 +94,7 @@ export default function StoreDetailPage() {
               </div>
               <div className="flex gap-2">
                 <a href={`tel:${store.phone}`} className="btn-secondary !py-2 !px-3 text-xs"><Phone className="w-4 h-4" /></a>
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-2 !px-3 text-xs"><MessageCircle className="w-4 h-4" /></a>
+                {whatsapp && <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-2 !px-3 text-xs"><MessageCircle className="w-4 h-4" /></a>}
               </div>
             </div>
           </div>
@@ -149,10 +150,10 @@ export default function StoreDetailPage() {
                 <span className="font-heading font-bold text-white">المجموع</span>
                 <span className="font-heading font-bold gradient-text text-lg">{totalPrice.toLocaleString()} ل.س</span>
               </div>
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-primary w-full flex items-center justify-center gap-2">
+              {whatsapp && <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-primary w-full flex items-center justify-center gap-2">
                 <MessageCircle className="w-4 h-4" />
                 أرسل الطلب عبر واتساب
-              </a>
+              </a>}
             </div>
           )}
         </motion.div>

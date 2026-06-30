@@ -13,12 +13,7 @@ export default function DashboardBotsPage() {
   useEffect(() => {
     const fetchBots = async () => {
       try {
-        const userRes = await fetch('/api/v1/auth/me')
-        if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
-        const userData = await userRes.json()
-        if (!userData?.id) throw new Error('لم يتم العثور على معرف المستخدم')
-
-        const botsRes = await fetch(`/api/v1/bots?userId=${userData.id}`)
+        const botsRes = await fetch('/api/v1/bots')
         if (!botsRes.ok) throw new Error('فشل في تحميل البوتات')
         const botsData = await botsRes.json()
         setBots(botsData.data ?? [])
