@@ -161,7 +161,7 @@ export default function AgentPage() {
                       {order.status === 'pending' ? 'معلق' : 'تم التحصيل'}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-400">{order.user.nameAr}</p>
+                  <p className="text-sm text-gray-400">{order.user?.nameAr || '—'}</p>
                 </div>
                 <span className="font-heading font-bold text-lg gradient-text">
                   {order.totalSyp.toLocaleString()} ل.س
@@ -171,7 +171,7 @@ export default function AgentPage() {
               <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                 <span className="flex items-center gap-1">
                   <Phone className="w-3 h-3" />
-                  {order.user.phone}
+                  {order.user?.phone || '—'}
                 </span>
                 {order.shippingAddress && (
                   <span className="flex items-center gap-1">

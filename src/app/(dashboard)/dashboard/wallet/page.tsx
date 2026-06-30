@@ -94,7 +94,7 @@ export default function DashboardWalletPage() {
                   </div>
                   <div>
                     <p className="text-sm text-white font-medium">{tx.description || tx.type}</p>
-                    <p className="text-xs text-gray-500">{tx.date}</p>
+                    <p className="text-xs text-gray-500">{tx.date ?? '—'}</p>
                   </div>
                 </div>
                 <span className={`text-sm font-bold ${tx.type === 'deposit' || tx.type === 'credit' ? 'text-secondary-400' : 'text-red-400'}`}>

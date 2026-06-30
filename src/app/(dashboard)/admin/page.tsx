@@ -151,7 +151,7 @@ export default function AdminPage() {
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-dark-border last:border-0">
                   <div>
                     <p className="text-sm font-medium text-white">{order.orderNumber}</p>
-                    <p className="text-xs text-gray-500">{order.user.nameAr} - {order.store.name}</p>
+                    <p className="text-xs text-gray-500">{order.user?.nameAr || '—'} - {order.store?.name || '—'}</p>
                   </div>
                   <span className="text-sm font-bold text-green-400">{order.totalSyp.toLocaleString()} ل.س</span>
                 </div>

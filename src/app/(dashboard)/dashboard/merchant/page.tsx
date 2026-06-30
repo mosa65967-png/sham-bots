@@ -51,7 +51,7 @@ export default function DashboardMerchantPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="mb-6">
           <h1 className="font-heading text-3xl font-bold text-white">
-            {user ? `متجر ${user.nameAr}` : 'المتجر'}
+            {user ? `متجر ${user.nameAr || user.name || ''}`.trim() : 'المتجر'}
           </h1>
           <p className="text-gray-400 mt-1">إدارة منتجاتك ومتجرك الإلكتروني</p>
         </div>

@@ -32,7 +32,7 @@ export default function RegisterPage() {
           router.push('/dashboard')
           router.refresh()
         } else {
-          setError('تم إنشاء الحساب لكن فشل تسجيل الدخول تلقائياً')
+          setError('تم إنشاء الحساب بنجاح. يمكنك تسجيل الدخول الآن')
         }
       } else {
         setError(data.error || 'فشل إنشاء الحساب')
@@ -61,7 +61,12 @@ export default function RegisterPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">{error}</div>
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+            {error}
+            {error.includes('تسجيل الدخول') && (
+              <Link href="/auth/login" className="block mt-1 text-primary-400 hover:text-primary-300 underline">تسجيل الدخول</Link>
+            )}
+          </div>
         )}
 
         <div className="glass-card">

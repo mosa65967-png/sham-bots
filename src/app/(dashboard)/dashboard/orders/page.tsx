@@ -30,11 +30,12 @@ export default function DashboardOrdersPage() {
         const userRes = await fetch('/api/v1/auth/me')
         if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
         const userData = await userRes.json()
+        if (!userData?.id) throw new Error('لم يتم العثور على معرف المستخدم')
 
         const ordersRes = await fetch(`/api/v1/orders?userId=${userData.id}`)
         if (!ordersRes.ok) throw new Error('فشل في تحميل الطلبات')
         const ordersData = await ordersRes.json()
-        setOrders(ordersData.data ?? [])
+        setOrders(Array.isArray(ordersData?.data) ? ordersData.data : Array.isArray(ordersData) ? ordersData : [])
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -108,10 +109,10 @@ export default function DashboardOrdersPage() {
                       <span className="text-sm text-white font-medium">{order.id}</span>
                       <span className={cn('px-2 py-0.5 rounded text-[10px]', statusStyles[order.status])}>{statusLabels[order.status]}</span>
                     </div>
-                    <p className="text-xs text-gray-400">{order.customer} · {order.items} منتجات · {order.total.toLocaleString()} ل.س</p>
+                    <p className="text-xs text-gray-400">{order.customer ?? '—'} · {order.items ?? 0} منتجات · {(order.total ?? 0).toLocaleString()} ل.س</p>
                   </div>
                 </div>
-                <span className="text-xs text-gray-500">{order.date}</span>
+                <span className="text-xs text-gray-500">{order.date ?? '—'}</span>
               </div>
             ))}
           </div>

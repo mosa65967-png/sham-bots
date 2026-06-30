@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
@@ -17,10 +17,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  if (session) {
-    router.push('/dashboard')
-    return null
-  }
+  useEffect(() => {
+    if (session) {
+      router.push('/dashboard')
+    }
+  }, [session, router])
+
+  if (session) return null
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,7 +38,6 @@ export default function LoginPage() {
       const data = await res.json()
       if (data.success) {
         setStep('otp')
-        if (data.debug?.otp) console.log('[OTP DEBUG]', data.debug.otp)
       } else {
         setError(data.error || 'فشل إرسال رمز التحقق')
       }
@@ -87,7 +89,12 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true)
-    await signIn('google', { callbackUrl: '/dashboard' })
+    try {
+      await signIn('google', { callbackUrl: '/dashboard' })
+    } catch {
+      setError('فشل تسجيل الدخول عبر Google')
+      setLoading(false)
+    }
   }
 
   const handleResendOTP = async () => {
@@ -100,7 +107,7 @@ export default function LoginPage() {
         body: JSON.stringify({ phone }),
       })
       const data = await res.json()
-      if (data.success && data.debug?.otp) console.log('[OTP DEBUG]', data.debug.otp)
+      if (data.success) { /* sent */ }
     } catch {
       setError('فشل إعادة الإرسال')
     } finally {

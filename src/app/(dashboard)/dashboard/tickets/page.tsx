@@ -15,12 +15,12 @@ export default function DashboardTicketsPage() {
         const userRes = await fetch('/api/v1/auth/me')
         if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
         const userData = await userRes.json()
+        if (!userData?.id) throw new Error('لم يتم العثور على معرف المستخدم')
 
         const ticketsRes = await fetch(`/api/v1/tickets?userId=${userData.id}`)
-        if (ticketsRes.ok) {
-          const ticketsData = await ticketsRes.json()
-          setTickets(ticketsData.data ?? [])
-        }
+        if (!ticketsRes.ok) throw new Error('فشل في تحميل التذاكر')
+        const ticketsData = await ticketsRes.json()
+        setTickets(Array.isArray(ticketsData?.data) ? ticketsData.data : [])
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -79,7 +79,7 @@ export default function DashboardTicketsPage() {
                   <MessageCircle className="w-5 h-5 text-primary-400" />
                   <div>
                     <p className="text-sm text-white font-medium">{t.subject}</p>
-                    <p className="text-xs text-gray-500">{t.messages} رسائل · {t.date}</p>
+                    <p className="text-xs text-gray-500">{t.messages ?? 0} رسائل · {t.date ?? '—'}</p>
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs ${t.status === 'open' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'}`}>

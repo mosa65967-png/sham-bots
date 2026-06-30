@@ -7,7 +7,9 @@ import { Settings as SettingsIcon, User, Bell, Shield, Save } from 'lucide-react
 export default function DashboardSettingsPage() {
   const [profile, setProfile] = useState({ name: '', phone: '', email: '' })
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,6 +41,29 @@ export default function DashboardSettingsPage() {
     )
   }
 
+  const handleSave = async () => {
+    setSaving(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      const res = await fetch('/api/v1/auth/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: profile.name, phone: profile.phone, email: profile.email }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSuccess('تم حفظ التغييرات بنجاح')
+      } else {
+        setError(data.error || 'فشل حفظ التغييرات')
+      }
+    } catch {
+      setError('حدث خطأ في الاتصال')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -65,9 +90,15 @@ export default function DashboardSettingsPage() {
               <input type="text" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} placeholder="الاسم الكامل" className="input-field" />
               <input type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="رقم الهاتف" className="input-field" />
               <input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} placeholder="البريد الإلكتروني" className="input-field" />
-              <button className="btn-primary">
+              {success && (
+                <p className="text-green-400 text-sm mb-2">{success}</p>
+              )}
+              {error && (
+                <p className="text-red-400 text-sm mb-2">{error}</p>
+              )}
+              <button onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">
                 <Save className="w-4 h-4 ml-2 inline-block" />
-                حفظ التغييرات
+                {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
               </button>
             </div>
           </div>

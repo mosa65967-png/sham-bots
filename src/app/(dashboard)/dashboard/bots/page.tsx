@@ -16,6 +16,7 @@ export default function DashboardBotsPage() {
         const userRes = await fetch('/api/v1/auth/me')
         if (!userRes.ok) throw new Error('فشل في تحميل البيانات')
         const userData = await userRes.json()
+        if (!userData?.id) throw new Error('لم يتم العثور على معرف المستخدم')
 
         const botsRes = await fetch(`/api/v1/bots?userId=${userData.id}`)
         if (!botsRes.ok) throw new Error('فشل في تحميل البوتات')
